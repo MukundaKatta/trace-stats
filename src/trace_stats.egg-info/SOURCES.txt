@@ -1,0 +1,14 @@
+LICENSE
+README.md
+pyproject.toml
+src/trace_stats/__init__.py
+src/trace_stats/__main__.py
+src/trace_stats/core.py
+src/trace_stats/py.typed
+src/trace_stats.egg-info/PKG-INFO
+src/trace_stats.egg-info/SOURCES.txt
+src/trace_stats.egg-info/dependency_links.txt
+src/trace_stats.egg-info/entry_points.txt
+src/trace_stats.egg-info/requires.txt
+src/trace_stats.egg-info/top_level.txt
+tests/test_stats.py

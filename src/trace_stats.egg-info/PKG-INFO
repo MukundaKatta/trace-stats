@@ -1,0 +1,110 @@
+Metadata-Version: 2.4
+Name: trace-stats
+Version: 0.1.0
+Summary: Compute latency/cost/token percentile statistics (p50, p95, p99) from agent JSONL traces. Zero runtime deps.
+Author-email: Mukunda Katta <mukunda.vjcs6@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/MukundaKatta/trace-stats
+Project-URL: Repository, https://github.com/MukundaKatta/trace-stats
+Keywords: agents,observability,statistics,jsonl,latency,percentile
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Dynamic: license-file
+
+# trace-stats
+
+Compute p50/p95/p99 percentile statistics on any numeric field in an agent JSONL trace — latency, cost, tokens. Zero runtime dependencies.
+
+```bash
+pip install trace-stats
+```
+
+## CLI
+
+```bash
+python3 -m trace_stats run.jsonl duration_ms cost_usd
+```
+
+```
+duration_ms:
+  n=47 total=42300.0
+  mean=900.0 stddev=340.2
+  min=120.0 p50=850.0 p90=1450.0 p95=1680.0 p99=1950.0 max=2100.0
+
+cost_usd:
+  n=35 total=0.034200
+  mean=0.000977 stddev=0.000280
+  min=0.000100 p50=0.000900 p90=0.001400 p95=0.001600 p99=0.001900 max=0.002100
+```
+
+## Python API
+
+```python
+from trace_stats import field_stats, load_jsonl
+
+events = load_jsonl("run.jsonl")
+s = field_stats(events, "duration_ms")
+
+print(f"p50: {s.p50:.0f}ms  p95: {s.p95:.0f}ms  p99: {s.p99:.0f}ms")
+print(f"mean: {s.mean:.0f}ms  stddev: {s.stddev:.0f}ms")
+```
+
+## Multiple fields in one pass
+
+```python
+from trace_stats import multi_field_stats
+
+stats = multi_field_stats(events, ["duration_ms", "cost_usd", "tokens_in"])
+for field, s in stats.items():
+    print(f"{field}: p95={s.p95:.3g}")
+```
+
+## FieldStats dataclass
+
+```python
+@dataclass
+class FieldStats:
+    field: str
+    count: int        # events with a numeric value for this field
+    total: float
+    mean: float
+    minimum: float
+    maximum: float
+    p50: float
+    p90: float
+    p95: float
+    p99: float
+    stddev: float     # sample standard deviation (ddof=1), 0 for count <= 1
+```
+
+## Works with any JSONL shape
+
+trace-stats reads any numeric field from any event dict. Works with agenttrace, agentleash, agent-step-log, and hand-rolled logs. Boolean values are not treated as numbers.
+
+## Part of the trace toolchain
+
+- [agent-step-log](https://github.com/MukundaKatta/agent-step-log) — write JSONL logs with duration_ms, cost_usd, tokens_*
+- [trace-merge](https://github.com/MukundaKatta/trace-merge) — stitch N logs into one stream
+- [trace-filter](https://github.com/MukundaKatta/trace-filter) — filter events before computing stats
+- [trace-cost](https://github.com/MukundaKatta/trace-cost) — totals and breakdowns
+- **trace-stats** — percentiles and distributions
+
+## Testing
+
+```bash
+PYTHONPATH=src python3 -m pytest tests/ -q
+# 19 passed
+```
+
+Zero runtime dependencies. Python 3.10+. MIT license.
